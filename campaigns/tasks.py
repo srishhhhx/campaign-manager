@@ -63,7 +63,7 @@ def dispatch_campaign(self, campaign_send_id: int):
     name="campaigns.tasks.send_email_to_subscriber",
     max_retries=3,
     default_retry_delay=60,  # 60s between retries
-    # rate_limit="10/m" — disabled for parallelism demo; re-enable at Commit #9 for Mailgun
+    rate_limit="5/m",  # Mailgun sandbox: 5/min; increase for production
 )
 def send_email_to_subscriber(self, log_id: int):
     """
@@ -103,10 +103,29 @@ def send_email_to_subscriber(self, log_id: int):
         return "sent"
 
     except Exception as exc:
+        import smtplib
+
+        # Permanent failure: SMTP 4xx (unauthorized recipient, auth rejected, etc.)
+        # These will never succeed on retry — mark failed immediately.
+        is_permanent = (
+            isinstance(exc, (smtplib.SMTPDataError, smtplib.SMTPRecipientsRefused))
+            and hasattr(exc, "smtp_code")
+            and 400 <= exc.smtp_code < 500
+        )
+        if not is_permanent and isinstance(exc, smtplib.SMTPDataError) and exc.args:
+            code = exc.args[0] if exc.args else 0
+            is_permanent = 400 <= int(code) < 500
+
         log.status = CampaignLog.SendStatus.FAILED
         log.error_message = str(exc)
         log.save(update_fields=["status", "error_message"])
         logger.error(f"Failed to send to {log.subscriber.email}: {exc}")
+
+        if is_permanent:
+            # Don't retry — this address will never be deliverable with current config
+            logger.warning(f"Permanent SMTP failure for {log.subscriber.email}. Not retrying.")
+            return "failed"
+
         raise self.retry(exc=exc)
 
 

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>{{ campaign.subject }}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    /* Reset */
+    * { box-sizing: border-box; }
+    body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+    img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; background-color: #f0f2f8; }
+
+    /* Google Font import — fallback gracefully in clients that block it */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* Wrapper */
+    .email-wrapper {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 32px 16px 48px;
+    }
+
+    /* Card */
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(99, 91, 255, 0.10), 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    /* Header — gradient */
+    .header {
+      background: linear-gradient(135deg, #4338ca 0%, #7c3aed 55%, #9333ea 100%);
+      padding: 40px 40px 36px;
+      position: relative;
+    }
+    .header-eyebrow {
+      display: inline-block;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 14px;
+    }
+    .header-title {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.35;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+    .header-accent {
+      display: block;
+      width: 48px;
+      height: 3px;
+      margin-top: 20px;
+      background: rgba(255,255,255,0.35);
+      border-radius: 2px;
+    }
+
+    /* Preview text — hidden inbox snippet */
+    .preview-text {
+      display: none;
+      max-height: 0;
+      overflow: hidden;
+      mso-hide: all;
+      font-size: 1px;
+      color: #f0f2f8;
+    }
+
+    /* Body */
+    .body {
+      padding: 36px 40px 32px;
+    }
+    .greeting {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: #374151;
+      margin: 0 0 20px;
+    }
+    .content {
+      font-family: 'Inter', Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: #4b5563;
+      line-height: 1.8;
+    }
+    .content h3 {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: #111827;
+      margin: 28px 0 10px;
+      letter-spacing: -0.2px;
+    }
+    .content p {
+      margin: 0 0 18px;
+    }
+    .content a {
+      color: #6d28d9;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* CTA Button */
+    .cta-wrap {
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      color: #ffffff !important;
+      text-decoration: none !important;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      padding: 14px 36px;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(109, 40, 217, 0.35);
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e5e7eb 20%, #e5e7eb 80%, transparent);
+      margin: 32px 0;
+      border: none;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 0 40px 36px;
+      text-align: center;
+    }
+    .footer p {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      color: #9ca3af;
+      line-height: 1.6;
+      margin: 0 0 6px;
+    }
+    .footer a {
+      color: #7c3aed;
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+
+    /* Bottom branding strip */
+    .brand-strip {
+      padding: 18px 40px;
+      background: #fafafa;
+      border-top: 1px solid #f3f4f6;
+      text-align: center;
+    }
+    .brand-strip span {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #9ca3af;
+    }
+
+    /* Responsive */
+    @media only screen and (max-width: 480px) {
+      .email-wrapper { padding: 16px 8px 32px; }
+      .header { padding: 28px 24px 24px; }
+      .header-title { font-size: 22px; }
+      .body { padding: 28px 24px 24px; }
+      .footer, .brand-strip { padding-left: 24px; padding-right: 24px; }
+      .cta-btn { padding: 13px 28px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hidden preview text for inbox snippet -->
+  <span class="preview-text">{{ campaign.preview_text }} &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</span>
+
+  <div class="email-wrapper">
+    <div class="card">
+
+      <!-- ── HEADER ─────────────────────────────────────────── -->
+      <div class="header">
+        <span class="header-eyebrow">MikeLegal Newsletter</span>
+        <h1 class="header-title">{{ campaign.subject }}</h1>
+        <span class="header-accent"></span>
+      </div>
+
+      <!-- ── BODY ──────────────────────────────────────────── -->
+      <div class="body">
+        <p class="greeting">Hi {{ subscriber.first_name }},</p>
+
+        <div class="content">
+          {{ campaign.html_content|safe }}
+        </div>
+
+        {% if campaign.article_url %}
+        <div class="cta-wrap">
+          <a class="cta-btn" href="{{ campaign.article_url }}" target="_blank">
+            Read Full Article &rarr;
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── FOOTER ─────────────────────────────────────────── -->
+      <hr class="divider" />
+
+      <div class="footer">
+        <p>You're receiving this because you subscribed to MikeLegal updates.</p>
+        <p>
+          <a href="{{ unsubscribe_url }}">Unsubscribe</a>
+          &nbsp;&middot;&nbsp;
+          <a href="https://mikelegal.com">MikeLegal.com</a>
+        </p>
+      </div>
+
+      <div class="brand-strip">
+        <span>MikeLegal &mdash; AI-Powered IP Intelligence</span>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
