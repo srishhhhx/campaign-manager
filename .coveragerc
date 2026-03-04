@@ -1,0 +1,15 @@
+[run]
+source = subscribers, campaigns
+omit =
+    */migrations/*
+    */tests/*
+    manage.py
+    core/settings.py
+    core/celery.py
+
+[report]
+show_missing = True
+skip_covered = False
+
+[html]
+directory = docs/coverage
