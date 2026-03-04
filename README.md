@@ -53,22 +53,22 @@ A Django-based Email Campaign Manager built as part of the MikeLegal Backend Int
 
 ### The Problem with Sequential Sending
 
-Sending emails one-by-one means 1,000 subscribers = 1,000 sequential SMTP calls. At 100ms per call that is 100 seconds of blocking work — completely unacceptable for a production system.
+Sending emails one by one means 1,000 subscribers = 1,000 sequential SMTP calls. At 100ms per call that is 100 seconds of blocking work which is completely unacceptable for a production system.
 
 ### The Solution — Producer-Consumer with Celery + Redis
 
 When a campaign send is triggered the system does the following:
 
 1. **Snapshots** all active subscriber IDs at that exact moment
-2. **Bulk-creates** a `CampaignLog` row per subscriber with `status=pending` in a single DB call
-3. **Returns HTTP 202 immediately** — Django does not wait for any emails to send
+2. **Bulk creates** a `CampaignLog` row per subscriber with `status=pending` in a single DB call
+3. **Returns HTTP 202 immediately** , Django does not wait for any emails to send
 4. **Publishes** one Celery task per subscriber onto the Redis queue simultaneously
 5. **Multiple workers** consume from the queue in parallel, each handling its own SMTP connection independently
 6. A **Celery chord callback** fires once every task completes, updating `total_sent`, `total_failed`, and `completed_at`
 
 ### Performance Comparison
 
-| Approach | 1,000 subscribers | Crash-safe | Retryable |
+| Approach | 1,000 subscribers | Crash safe | Retryable |
 |---|---|---|---|
 | Sequential loop | ~100 seconds | No | No |
 | Python threading | ~25 seconds | No | No |
@@ -76,7 +76,7 @@ When a campaign send is triggered the system does the following:
 
 ### Idempotency
 
-Each worker task checks `CampaignLog.status` before sending. If the row is already `sent` the task skips it and returns immediately. This means tasks are safe to retry — no subscriber ever receives the same campaign twice. The `unique_together = ('campaign', 'subscriber')` constraint on `CampaignLog` provides a second layer of protection at the database level.
+Each worker task checks `CampaignLog.status` before sending. If the row is already `sent` the task skips it and returns immediately. This means tasks are safe to retry , no subscriber ever receives the same campaign twice. The `unique_together = ('campaign', 'subscriber')` constraint on `CampaignLog` provides a second layer of protection at the database level.
 
 ### Daily Scheduling via Celery Beat
 
@@ -92,55 +92,11 @@ This means campaigns dispatch automatically every day without any manual interve
 
 ## 4. Models Schema
 
-> Tables below describe all four database models and their constraints.
+> The image below shows models schema of the databse tables in the project.
 
-### subscribers_subscriber
+![Models Schema](docs/models-schema.png)
 
-| Field | Type | Constraints |
-|---|---|---|
-| `id` | BigAutoField | PK |
-| `email` | EmailField | Unique, max 254 chars, indexed |
-| `first_name` | CharField | max 100 chars |
-| `status` | CharField | choices: `active` / `inactive`, default `active` |
-| `subscribed_at` | DateTimeField | auto set on creation |
-| `unsubscribed_at` | DateTimeField | nullable, set on unsubscribe |
-
-### campaigns_campaign
-
-| Field | Type | Constraints |
-|---|---|---|
-| `id` | BigAutoField | PK |
-| `subject` | CharField | max 200 chars |
-| `preview_text` | CharField | max 300 chars |
-| `article_url` | URLField | max 500 chars |
-| `html_content` | TextField | full HTML body |
-| `plain_text_content` | TextField | plain text fallback |
-| `published_date` | DateField | campaign go-live date |
-
-### campaigns_campaignsend
-
-| Field | Type | Constraints |
-|---|---|---|
-| `id` | BigAutoField | PK |
-| `campaign` | ForeignKey | -> Campaign, CASCADE |
-| `triggered_by` | CharField | choices: `manual` / `scheduled` |
-| `triggered_at` | DateTimeField | auto set on creation |
-| `total_sent` | IntegerField | default 0, updated by chord callback |
-| `total_failed` | IntegerField | default 0, updated by chord callback |
-| `completed_at` | DateTimeField | nullable, set when all tasks complete |
-
-### campaigns_campaignlog
-
-| Field | Type | Constraints |
-|---|---|---|
-| `id` | BigAutoField | PK |
-| `campaign` | ForeignKey | -> Campaign, CASCADE |
-| `subscriber` | ForeignKey | -> Subscriber, CASCADE |
-| `status` | CharField | choices: `pending` / `sent` / `failed` / `skipped` |
-| `sent_at` | DateTimeField | nullable |
-| `error_message` | TextField | nullable, populated on failure |
-
-`unique_together = ('campaign', 'subscriber')` — prevents duplicate sends at the database level regardless of what happens at the application layer.
+[View full field reference → docs/models-schema.md](docs/models-schema.md)
 
 ---
 
@@ -148,7 +104,7 @@ This means campaigns dispatch automatically every day without any manual interve
 
 | Method | Endpoint | Description | Response Docs |
 |---|---|---|---|
-| `POST` | `/api/subscribers/` | Add or re-subscribe a user | [docs](docs/api/subscribers.md) |
+| `POST` | `/api/subscribers/` | Add or resubscribe a user | [docs](docs/api/subscribers.md) |
 | `POST` | `/api/subscribers/unsubscribe/` | Unsubscribe a user | [docs](docs/api/subscribers.md) |
 | `POST` | `/api/campaigns/{id}/send/` | Trigger campaign dispatch | [docs](docs/api/campaigns.md) |
 | `GET` | `/api/campaigns/` | List all campaigns | [docs](docs/api/campaigns.md) |
@@ -158,9 +114,9 @@ This means campaigns dispatch automatically every day without any manual interve
 | Code | Meaning |
 |---|---|
 | `201` | Subscriber created successfully |
-| `202` | Campaign send accepted — tasks firing asynchronously |
+| `202` | Campaign send accepted , tasks firing asynchronously |
 | `200` | Re-subscribed or unsubscribed successfully |
-| `400` | Validation error — see response body for details |
+| `400` | Validation error , see response body for details |
 | `404` | Resource not found |
 | `409` | Campaign already sent today |
 
@@ -332,27 +288,27 @@ Coverage report — [view](docs/screenshots/Tests.png)
 
 ### Celery + Redis over Python Threading
 
-Python threading was considered and rejected for three reasons. Threads share memory — a process crash loses all queued jobs with no recovery path. The GIL limits true parallelism for concurrent work. There is no visibility into queue state, failure counts, or retry logic. Redis as a broker gives persistence, Flower observability, built-in retries, and horizontal scalability with no meaningful added complexity.
+Python threading was considered and rejected for three reasons. Threads share memory a process crash loses all queued jobs with no recovery path. The GIL limits true parallelism for concurrent work. There is no visibility into queue state, failure counts, or retry logic. Redis as a broker gives persistence, Flower observability, built-in retries, and horizontal scalability with no meaningful added complexity.
 
 ### Subscriber Snapshot at Trigger Time
 
-Active subscribers are snapshotted immediately when a send is triggered and stored as `CampaignLog` rows with `status=pending`. This is a deliberate design decision. A subscriber who unsubscribes mid-send is handled correctly — their task detects the inactive status and marks the log `skipped`. There are no race conditions between the view and the workers because the list is fixed at trigger time, not queried dynamically during execution.
+Active subscribers are snapshotted immediately when a send is triggered and stored as `CampaignLog` rows with `status=pending`. This is a deliberate design decision. A subscriber who unsubscribes mid-send is handled correctly their task detects the inactive status and marks the log `skipped`. There are no race conditions between the view and the workers because the list is fixed at trigger time, not queried dynamically during execution.
 
 ### CampaignLog as Source of Truth
 
-Every send result is written directly to `CampaignLog` rather than relying on Celery's result backend. This gives a permanent per-subscriber audit trail, safe retries via the idempotency check, and the `unique_together` constraint as a database-level safety net. Even if a worker crashes and retries, it cannot double-send to a subscriber whose log is already `sent`.
+Every send result is written directly to `CampaignLog` rather than relying on Celery's result backend. This gives a permanent per-subscriber audit trail, safe retries via the idempotency check, and the `unique_together` constraint as a database level safety net. Even if a worker crashes and retries, it cannot double-send to a subscriber whose log is already `sent`.
 
 ### Chord for Completion Tracking
 
-A Celery `chord` ensures the `update_campaign_send_totals` callback fires exactly once — after every individual send task has completed. This keeps `CampaignSend.total_sent` accurate without polling, without race conditions, and without any manual coordination between workers.
+A Celery `chord` ensures the `update_campaign_send_totals` callback fires exactly once after every individual send task has completed. This keeps `CampaignSend.total_sent` accurate without polling, without race conditions, and without any manual coordination between workers.
 
 ### Date-Based 409 Guard
 
-The duplicate send guard blocks any second trigger for the same campaign on the same calendar day regardless of whether the previous send completed. This allows the same campaign to be re-sent the next day — valid for a daily newsletter — while preventing accidental double-sends within a single day. An in-progress-only check was tried and rejected because it reset once `completed_at` was populated.
+The duplicate send guard blocks any second trigger for the same campaign on the same calendar day regardless of whether the previous send completed. This allows the same campaign to be re-sent the next day valid for a daily newsletter while preventing accidental double-sends within a single day. An in-progress-only check was tried and rejected because it reset once `completed_at` was populated.
 
 ### Single Beat Instance
 
-Celery Beat must run as exactly one instance. Multiple Beat processes would fire `send_scheduled_campaigns` multiple times, dispatching the same campaign to every subscriber repeatedly. Docker Compose enforces this with exactly one `celery_beat` service. This is a well-known production pitfall that is easy to miss when scaling workers horizontally.
+Celery Beat must run as exactly one instance. Multiple Beat processes would fire `send_scheduled_campaigns` multiple times, dispatching the same campaign to every subscriber repeatedly. Docker Compose enforces this with exactly one `celery_beat` service.
 
 ---
 
@@ -387,7 +343,7 @@ Result:
 
 **2. PgBouncer Connection Pooling**
 
-Add PgBouncer as a new Docker service between Django/Celery and PostgreSQL. Multiplexes 80+ application connections down to ~10 real DB connections. No application code changes — only a new service in `docker-compose.yml` and a `DB_HOST` update in `.env`.
+Add PgBouncer as a new Docker service between Django/Celery and PostgreSQL. Multiplexes 80+ application connections down to ~10 real DB connections. No application code changes , only a new service in `docker-compose.yml` and a `DB_HOST` update in `.env`.
 
 **3. AWS SES over Mailgun**
 
@@ -396,7 +352,7 @@ Add PgBouncer as a new Docker service between Django/Celery and PostgreSQL. Mult
 | Mailgun | $0.80 | Good for low volume |
 | AWS SES | $0.10 | 8x cheaper at scale |
 
-No code changes — swap SMTP credentials in `.env`.
+No code changes. Swap SMTP credentials in `.env`.
 
 **4. Horizontal Worker Scaling**
 
@@ -407,7 +363,7 @@ celery_worker:
     replicas: 8
 ```
 
-Workers compete for tasks from the same Redis queue. No code changes — linear throughput scaling.
+Workers compete for tasks from the same Redis queue. No code changes. Linear throughput scaling.
 
 ### Production Cost Estimate
 
