@@ -33,3 +33,8 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+
+# Testing
+.coverage
+
