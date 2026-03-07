@@ -20,7 +20,7 @@ A production-ready bulk email dispatch system built with Django, Celery, and Red
 
 ## 1. Overview
 
-A Django-based Email Campaign Manager built as part of the MikeLegal Backend Intern assignment. The system allows you to:
+A Django based Email Campaign Manager system that allows you to:
 
 - Add and manage email subscribers via REST API and Django Admin
 - Create campaigns with rich HTML content, preview text, and article links
